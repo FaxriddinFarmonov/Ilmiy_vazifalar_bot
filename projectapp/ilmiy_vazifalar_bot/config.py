@@ -1,0 +1,11 @@
+BOT_TOKEN = "8100279274:AAHopDlBSzt_-0c_2ikxsyV5GQlDLB-X22E"
+
+FIRST_CHANNEL_ID = -1001111111111
+SECOND_CHANNEL_ID = -1002222222222
+
+SERVICE_PRICES = {
+    'mustaqil': 80000,
+    'kurs': 150000,
+    'diplom': 500000,
+    'software': None
+}
