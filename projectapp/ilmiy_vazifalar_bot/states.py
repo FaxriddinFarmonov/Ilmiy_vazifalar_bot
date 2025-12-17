@@ -6,4 +6,6 @@ class OrderFlow(StatesGroup):
     fullname = State()
     subject = State()
     topic = State()
+    confirm = State()
     payment = State()
+    receipt = State()

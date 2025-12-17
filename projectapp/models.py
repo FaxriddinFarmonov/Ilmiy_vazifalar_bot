@@ -1,22 +1,25 @@
 from django.db import models
 
+from django.db import models
+
 class Order(models.Model):
     STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("payment_approved", "Payment Approved"),
-        ("taken", "Taken"),
-        ("ready", "Ready"),
+        ("PENDING", "Pending"),
+        ("PAID", "Paid"),
+        ("IN_PROGRESS", "In Progress"),
+        ("COMPLETED", "Completed")
     ]
 
-    user_telegram_id = models.BigIntegerField()
-    contact_phone = models.CharField(max_length=20)
-    service_type = models.CharField(max_length=50)
-    fullname = models.CharField(max_length=100)
-    subject = models.CharField(max_length=200)
+    fullname = models.CharField(max_length=255)
+    phone = models.CharField(max_length=50)
+    service = models.CharField(max_length=100)
+    price = models.CharField(max_length=50, blank=True)
+    subject = models.CharField(max_length=255)
     topic = models.TextField()
-    price = models.IntegerField(null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
-    approved_by = models.CharField(max_length=100, null=True, blank=True)
-    taken_by = models.CharField(max_length=100, null=True, blank=True)
-    file_id = models.CharField(max_length=300, null=True, blank=True)
+    receipt_file_id = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="PENDING")
+    accepted_by = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.fullname} - {self.service}"

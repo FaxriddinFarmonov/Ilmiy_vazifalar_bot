@@ -1,24 +1,78 @@
 from aiogram import Router, F
-from aiogram.types import CallbackQuery
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton
+)
 from projectapp.models import Order
 
 router = Router()
 
-@router.callback_query(F.data.startswith("take_"))
-async def take_order(call: CallbackQuery):
-    order_id = int(call.data.split("_")[1])
+# =========================
+# 🔘 TUGMALAR
+# =========================
+def second_channel_keyboard(order_id: int):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="📥 Qabul qildim",
+                    callback_data=f"work_started:{order_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📤 Tayyor, mijozga yuborish",
+                    callback_data=f"work_done:{order_id}"
+                )
+            ]
+        ]
+    )
+
+# =========================
+# 📥 ISH BOSHLANDI
+# =========================
+@router.callback_query(F.data.startswith("work_started:"))
+async def work_started(cb: CallbackQuery, bot):
+    order_id = int(cb.data.split(":")[1])
+
     order = Order.objects.get(id=order_id)
-    order.status = "taken"
-    order.taken_by = call.from_user.full_name
+
+    if order.status != "PAID":
+        await cb.answer("❌ To‘lov hali tasdiqlanmagan", show_alert=True)
+        return
+
+    order.status = "IN_PROGRESS"
+    order.taken_by = cb.from_user.full_name
     order.save()
 
-    await call.bot.send_message(order.user_telegram_id, "📌 Buyurtmangiz qabul qilindi. Tez orada tayyor bo‘ladi.")
+    # 👤 MIJOZGA XABAR
+    await bot.send_message(
+        order.user.telegram_id,
+        "📦 Buyurtmangiz qabul qilindi.\nIsh boshlandi."
+    )
 
-@router.callback_query(F.data.startswith("ready_"))
-async def ready_order(call: CallbackQuery):
-    order_id = int(call.data.split("_")[1])
+    await cb.answer("✅ Ish boshlandi")
+
+# =========================
+# 📤 ISH TAYYOR
+# =========================
+@router.callback_query(F.data.startswith("work_done:"))
+async def work_done(cb: CallbackQuery, bot):
+    order_id = int(cb.data.split(":")[1])
     order = Order.objects.get(id=order_id)
-    order.status = "ready"
+
+    if order.status != "IN_PROGRESS":
+        await cb.answer("❌ Ish hali boshlanmagan", show_alert=True)
+        return
+
+    order.status = "DONE"
+    order.completed_by = cb.from_user.full_name
     order.save()
 
-    await call.bot.send_document(order.user_telegram_id, document=order.file_id, caption="✅ Buyurtmangiz tayyor!")
+    await bot.send_message(
+        order.user.telegram_id,
+        "✅ Buyurtmangiz tayyor!\nAdmin tez orada faylni yuboradi."
+    )
+
+    await cb.answer("📤 Tayyor deb belgilandi")
