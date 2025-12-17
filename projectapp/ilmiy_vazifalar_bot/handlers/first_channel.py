@@ -1,5 +1,5 @@
 # projectapp/ilmiy_vazifalar_bot/handlers/first_channel.py
-
+# vdfvddfvdfvdfvdfvdfvdfvdfvdfv
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
