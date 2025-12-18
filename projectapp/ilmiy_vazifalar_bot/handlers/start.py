@@ -10,25 +10,40 @@ from projectapp.ilmiy_vazifalar_bot.states import OrderFlow
 
 router = Router()
 
-# 1️⃣ /start — kontakt so‘rash
+
+# 1️⃣ /start — tanishtirish + kontakt tugmasi
 @router.message(CommandStart())
 async def start(msg: Message, state: FSMContext):
     await state.clear()
 
     kb = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(
-                text="📱 Kontaktni ulashish",
-                request_contact=True
-            )]
+            [
+                KeyboardButton(
+                    text="📱 Kontaktni ulashish",
+                    request_contact=True
+                )
+            ]
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
+        one_time_keyboard=True
     )
 
     await msg.answer(
-        "Assalomu alaykum!\nIltimos, kontaktni ulashing.",
+        "🎓 *Talabamiz?*\n\n"
+        "Unda biz sizga yordam beramiz 👇\n\n"
+        "📌 Kurs ishlari\n"
+        "📌 Mustaqil ishlar\n"
+        "📌 Diplom ishlari\n"
+        "📌 Amaliy ishlar va deadline topshiriqlar\n\n"
+        "Agar Telegram orqali muammo bo‘lsa:\n"
+        "👨‍💼 Admin: @ogabek238\n"
+        "📞 Tel: 972001426\n\n"
+        "⬇️ Davom etish uchun kontaktni ulashing",
+        parse_mode="Markdown",
         reply_markup=kb
     )
+
     await state.set_state(OrderFlow.contact)
 
 
@@ -36,7 +51,7 @@ async def start(msg: Message, state: FSMContext):
 @router.message(OrderFlow.contact)
 async def contact_received(msg: Message, state: FSMContext):
     if not msg.contact:
-        await msg.answer("❗ Iltimos, tugma orqali kontakt ulashing.")
+        await msg.answer("❗ Iltimos, pastdagi tugma orqali kontakt ulashing.")
         return
 
     await state.update_data(phone=msg.contact.phone_number)
@@ -52,10 +67,11 @@ async def contact_received(msg: Message, state: FSMContext):
     )
 
     await msg.answer(
-        "Universitetda o‘qiysizmi?\n"
-        "Unda biz sizga yordam beramiz 👇",
+        "✅ Rahmat!\n\n"
+        "Quyidagi xizmatlardan birini tanlang 👇",
         reply_markup=kb
     )
+
     await state.set_state(OrderFlow.service)
 
 
@@ -84,14 +100,15 @@ async def service_chosen(msg: Message, state: FSMContext):
         f"💰 Narxi: {prices[service]}\n\n"
         "✍️ Ism va Familiyangizni kiriting:"
     )
+
     await state.set_state(OrderFlow.fullname)
 
 
-# 4️⃣ Ism–Familiyani qabul qilish
+# 4️⃣ Ism–Familiya
 @router.message(OrderFlow.fullname)
 async def fullname_received(msg: Message, state: FSMContext):
     if len(msg.text.split()) < 2:
-        await msg.answer("❗ Iltimos, Ism va Familiyani to‘liq kiriting.")
+        await msg.answer("❗ Ism va Familiyani to‘liq kiriting.")
         return
 
     await state.update_data(fullname=msg.text)
@@ -100,7 +117,7 @@ async def fullname_received(msg: Message, state: FSMContext):
     await state.set_state(OrderFlow.subject)
 
 
-# 5️⃣ Fan nomini qabul qilish
+# 5️⃣ Fan
 @router.message(OrderFlow.subject)
 async def subject_received(msg: Message, state: FSMContext):
     await state.update_data(subject=msg.text)
@@ -109,7 +126,7 @@ async def subject_received(msg: Message, state: FSMContext):
     await state.set_state(OrderFlow.topic)
 
 
-# 6️⃣ Mavzuni qabul qilish → chek so‘rash
+# 6️⃣ Mavzu → to‘lov
 @router.message(OrderFlow.topic)
 async def topic_received(msg: Message, state: FSMContext):
     await state.update_data(topic=msg.text)
@@ -119,4 +136,5 @@ async def topic_received(msg: Message, state: FSMContext):
         "📌 9860 3501 0195 9046\n\n"
         "📸 Chek rasmini yoki 📄 PDF faylni yuboring."
     )
+
     await state.set_state(OrderFlow.receipt)
