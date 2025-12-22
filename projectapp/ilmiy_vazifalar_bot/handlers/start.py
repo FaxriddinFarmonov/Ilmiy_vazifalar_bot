@@ -36,9 +36,7 @@ async def start(msg: Message, state: FSMContext):
         "📌 Mustaqil ishlar\n"
         "📌 Diplom ishlari\n"
         "📌 Amaliy ishlar va deadline topshiriqlar\n\n"
-        "Agar Telegram orqali muammo bo‘lsa:\n"
-        "👨‍💼 Admin: @ogabek238\n"
-        "📞 Tel: 972001426\n\n"
+        
         "⬇️ Davom etish uchun kontaktni ulashing",
         parse_mode="Markdown",
         reply_markup=kb

@@ -112,5 +112,5 @@ async def send_result(channel_post: Message, bot):
     # Mijozga xabar
     await bot.send_message(
         order.user_telegram_id,
-        f"✅ Buyurtma #{order.id} tayyor!\n📎 Fayl yuborildi.\nRahmat!"
+        f"✅ Buyurtma #{order.id} tayyor!\n📎 Fayl yuborildi.\nRahmat!\nTalab va takliflar uchun https://t.me/takliflar_va_shikoyatlar/1 bu guruhga yozing"
     )
