@@ -30,7 +30,7 @@ async def start(msg: Message, state: FSMContext):
     )
 
     await msg.answer(
-        "🎓 *Talabamiz?*\n\n"
+        "🎓 *Talabamisiz?*\n\n"
         "Unda biz sizga yordam beramiz 👇\n\n"
         "📌 Kurs ishlari\n"
         "📌 Mustaqil ishlar\n"
