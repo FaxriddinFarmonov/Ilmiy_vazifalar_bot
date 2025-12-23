@@ -8,6 +8,16 @@ from aiogram.types import (
 from asgiref.sync import sync_to_async
 from projectapp.models import Order
 
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+# Start tugmasi klaviaturasi
+start_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="/start")]
+    ],
+    resize_keyboard=True
+)
+
 router = Router()
 
 # =====================================================
@@ -111,6 +121,12 @@ async def send_result(channel_post: Message, bot):
 
     # Mijozga xabar
     await bot.send_message(
-        order.user_telegram_id,
-        f"✅ Buyurtma #{order.id} tayyor!\n📎 Fayl yuborildi.\nRahmat!\nTalab va takliflar uchun https://t.me/takliflar_va_shikoyatlar/1 bu guruhga yozing"
+        chat_id=order.user_telegram_id,
+        text=(
+            f"✅ Buyurtma #{order.id} tayyor!\n"
+            f"📎 Fayl yuborildi.\n"
+            f"Rahmat!\n"
+            f"Talab va takliflar uchun https://t.me/takliflar_va_shikoyatlar/1 bu guruhga yozing"
+        ),
+        reply_markup=start_kb
     )
