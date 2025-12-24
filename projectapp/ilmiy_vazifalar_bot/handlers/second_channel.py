@@ -6,12 +6,13 @@ from aiogram.types import (
 )
 from asgiref.sync import sync_to_async
 from django.core.files.base import ContentFile
+
 from projectapp.models import Order
 
 router = Router()
 
 # =========================
-# START TUGMASI (MIJOZ UCHUN)
+# START TUGMASI
 # =========================
 start_kb = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="/start")]],
@@ -40,11 +41,21 @@ def second_channel_kb(order_id: int):
     )
 
 # =========================
-# ✅ QABUL QILDIM HANDLER
+# ✅ QABUL QILDIM
 # =========================
 @router.callback_query(F.data.startswith("work_accept:"))
 async def work_accept(cb: CallbackQuery):
     order_id = int(cb.data.split(":")[1])
+
+    try:
+        order = await sync_to_async(Order.objects.get)(id=order_id)
+    except Order.DoesNotExist:
+        await cb.answer("Buyurtma topilmadi", show_alert=True)
+        return
+
+    order.status = "IN_PROGRESS"
+    await sync_to_async(order.save)()
+
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [
@@ -61,15 +72,17 @@ async def work_accept(cb: CallbackQuery):
             ]
         ]
     )
+
     await cb.message.edit_reply_markup(reply_markup=kb)
-    await cb.answer("✅ Buyurtma qabul qilindi", show_alert=True)
+    await cb.answer("✅ Buyurtma sizga biriktirildi", show_alert=True)
 
 # =========================
-# 📤 BUYURTMANI YUBORISH HANDLER
+# 📤 BUYURTMANI YUBORISH
 # =========================
 @router.callback_query(F.data.startswith("send_order:"))
 async def send_order(cb: CallbackQuery):
     order_id = int(cb.data.split(":")[1])
+
     await cb.message.answer(
         f"📎 Buyurtma #{order_id} faylini yuboring\n\n"
         f"⚠️ Caption AYNAN shunday bo‘lsin:\n"
@@ -78,47 +91,72 @@ async def send_order(cb: CallbackQuery):
     await cb.answer()
 
 # =========================
-# 📎 CHANNEL'DAN KELGAN FILE
+# 📎 CHANNEL'DAN KELGAN NATIJA
+# 🔥 ASOSIY MUHIM QISM
 # =========================
 @router.channel_post(F.photo | F.document)
 async def result_from_channel(msg: Message, bot):
     if not msg.caption or not msg.caption.startswith("order:"):
         return
+
     try:
         order_id = int(msg.caption.split(":")[1])
         order = await sync_to_async(Order.objects.get)(id=order_id)
     except (ValueError, Order.DoesNotExist):
         return
 
-    # Faylni aniqlash
+    # =========================
+    # FILE ANIQLASH
+    # =========================
     if msg.photo:
-        file_id = msg.photo[-1].file_id
-        await bot.send_photo(chat_id=order.user_telegram_id, photo=file_id)
+        tg_file = msg.photo[-1]
+        file_id = tg_file.file_id
+        filename = f"order_{order_id}.jpg"
     elif msg.document:
-        file_id = msg.document.file_id
-        await bot.send_document(chat_id=order.user_telegram_id, document=file_id)
+        tg_file = msg.document
+        file_id = tg_file.file_id
+        filename = tg_file.file_name or f"order_{order_id}"
     else:
         return
 
-    # DB yangilash
+    # =========================
+    # TELEGRAM'DAN FILE YUKLAB OLISH
+    # =========================
+    tg_file_obj = await bot.get_file(file_id)
+    file_bytes = await bot.download_file(tg_file_obj.file_path)
+
+    # =========================
+    # 🔥 DB GA REAL FILE SAQLASH
+    # =========================
     order.result_tg_file_id = file_id
+    order.result_file.save(
+        filename,
+        ContentFile(file_bytes.read()),
+        save=False
+    )
     order.status = "DONE"
     await sync_to_async(order.save)()
 
-    # Mijozga xabar
+    # =========================
+    # MIJOZGA FILE YUBORISH
+    # =========================
+    if msg.photo:
+        await bot.send_photo(order.user_telegram_id, photo=file_id)
+    else:
+        await bot.send_document(order.user_telegram_id, document=file_id)
+
     await bot.send_message(
-        chat_id=order.user_telegram_id,
-        text=(
+        order.user_telegram_id,
+        (
             f"✅ Buyurtma #{order.id} tayyor!\n"
             f"📎 Fayl yuborildi.\n"
-            f"Rahmat!\n"
-            f"Talab va takliflar uchun @takliflar_va_shikoyatlar"
+            f"Rahmat!"
         ),
         reply_markup=start_kb
     )
 
 # =========================
-# SECOND CHANNELGA YUBORILADIGAN BUYURTMANI FORMAT
+# SECOND CHANNELGA BUYURTMA YUBORISH
 # =========================
 async def send_order_to_second_channel(order: Order, bot):
     text = (
@@ -134,15 +172,8 @@ async def send_order_to_second_channel(order: Order, bot):
         f"order:{order.id}"
     )
 
-    # 1️⃣ Buyurtma matni yuboriladi
-    message = await bot.send_message(
-        chat_id=-1003387576321,  # Kanal ID
-        text=text
-    )
-
-    # 2️⃣ Inline tugmalar qo‘shiladi har bir buyurtma uchun alohida
-    await bot.edit_message_reply_markup(
-        chat_id=message.chat.id,
-        message_id=message.message_id,
+    await bot.send_message(
+        chat_id=-1003387576321,
+        text=text,
         reply_markup=second_channel_kb(order.id)
     )

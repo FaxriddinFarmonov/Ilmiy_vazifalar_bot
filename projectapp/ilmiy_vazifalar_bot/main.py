@@ -41,6 +41,7 @@ async def main():
     dp.include_router(first_channel.router)
     dp.include_router(second_channel.router)
 
+
     print("🤖 Bot ishga tushdi")
     await dp.start_polling(bot)
 
