@@ -150,7 +150,7 @@ async def result_from_channel(msg: Message, bot):
         (
             f"✅ Buyurtma #{order.id} tayyor!\n"
             f"📎 Fayl yuborildi.\n"
-            f"Rahmat!"
+            f"Rahmat! taklif va shikoyatlar uchun t.me/takliflar_va_shikoyatlar ga yozing !!!"
         ),
         reply_markup=start_kb
     )
